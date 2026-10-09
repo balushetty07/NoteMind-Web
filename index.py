@@ -82,3 +82,28 @@ def answer():
             return jsonify(error="Gemini returned an error. Try again."), 502
         return jsonify(reply=r.json()["candidates"][0]["content"]["parts"][0]["text"].strip())
     return jsonify(error="All models are busy. Try again in a minute."), 503
+
+
+@app.route("/api/title", methods=["POST"])
+def title():
+    q = str((request.get_json(silent=True) or {}).get("question", "")).strip()[:300]
+    if not q or not KEY:
+        return jsonify(title="")
+    prompt = (
+        "Write a title of 2 to 4 words for a chat that starts with this question. "
+        f"Reply with only the title, no quotes or punctuation.\n\nQuestion: {q}"
+    )
+    for model in MODELS[::-1]:
+        try:
+            r = requests.post(
+                f"{URL}/models/{model}:generateContent",
+                params={"key": KEY},
+                json={"contents": [{"parts": [{"text": prompt}]}]},
+                timeout=20,
+            )
+        except requests.exceptions.RequestException:
+            continue
+        if r.ok:
+            t = r.json()["candidates"][0]["content"]["parts"][0]["text"].strip().strip("\"'.*#")
+            return jsonify(title=t[:40])
+    return jsonify(title="")
