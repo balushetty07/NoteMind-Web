@@ -26,6 +26,32 @@ h1{font-size:28px;font-weight:700;letter-spacing:-.03em}
 .drop:hover,.drop.over{transform:scale(1.04);background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.55)}
 .drop b{display:block;font-size:16px;margin-bottom:4px}
 .drop span{color:rgba(244,245,250,.6);font-size:13px}
+.upload-note{padding:11px 13px;border:1px solid rgba(245,158,11,.32);border-radius:17px;background:rgba(245,158,11,.075);font-size:12px;line-height:1.45;color:rgba(244,245,250,.86);transition:padding .2s,border-radius .2s}
+.upload-note.compact{padding:7px 10px;border-radius:12px;font-size:11px;line-height:1.35}
+.upload-note.compact b{display:inline-block;margin:0 6px 0 0;font-size:11px}
+.upload-note.compact p{display:none}
+.notice-full{margin-top:7px;border:0;background:none;padding:0;color:#fbbf24;font:inherit;font-size:11px;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.upload-note.compact .notice-full{margin:0;display:inline}
+.item{flex:0 0 auto}
+.item.error{border-color:rgba(255,110,110,.55);background:rgba(255,70,70,.08)}
+.item.error small{color:#ffaaaa}
+.tick:disabled{opacity:.35;cursor:wait;transform:none}
+.upload-note b{display:block;margin-bottom:3px;font-size:12px;color:#fbbf24}
+.upload-note p{margin:0}
+.upload-note strong{font-weight:700;color:#fff}
+.warning-list{display:flex;flex-direction:column;gap:12px;padding-left:21px}
+.warning-list li{padding-left:3px;color:inherit;opacity:.9}
+.warning-callout{padding:13px 15px;border:1px solid rgba(245,158,11,.35);border-radius:16px;background:rgba(245,158,11,.09)}
+.warning-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.upload-modal{z-index:60}
+#uploadSelection{font-size:13px;opacity:.72;overflow-wrap:anywhere}
+[data-theme=light] .upload-note{color:rgba(22,24,36,.85);background:rgba(245,158,11,.1)}
+[data-theme=light] .notice-full{color:#925d00}
+[data-theme=light] .item.error{background:rgba(220,38,38,.06)}
+[data-theme=light] .item.error small{color:#b42318}
+[data-theme=light] .upload-note b{color:#925d00}
+[data-theme=light] .upload-note strong{color:#161824}
+[data-theme=light] .warning-callout{background:rgba(245,158,11,.12)}
 #src{display:flex;flex-direction:column;gap:10px;overflow-y:auto;flex:1;min-height:0}
 .item{display:flex;flex-direction:row;align-items:flex-start;gap:10px;padding:12px 16px;border-radius:20px;background:rgba(255,255,255,.08);border:1px solid var(--rim);animation:pop .6s var(--spring)}
 .iwrap{flex:1;min-width:0;display:flex;flex-direction:column}
@@ -195,6 +221,11 @@ a.btn{text-decoration:none;display:inline-block}
 <main class="app">
   <aside class="glass side" id="side">
     <div><h1>Your notes</h1><p class="sub">Add your notes, then ask questions. Tick a note to include or exclude it. Every answer shows where it came from.</p></div>
+    <div class="upload-note" id="uploadNote" role="note" aria-label="Important information before uploading">
+      <b>⚠ Before you upload</b>
+      <p>NoteMind is a student-built learning prototype. AI can be wrong, and retrieved snippets may miss context. Text and images may be sent to Google Gemini for processing. <strong>Do not upload confidential or sensitive information.</strong></p>
+      <button class="notice-full" id="readUploadNotice" type="button">Read full limitations</button>
+    </div>
     <label class="drop" id="drop" tabindex="0"><b>Drop notes here</b><span>or click to choose .txt, .md, .pdf or image files</span>
       <input id="file" type="file" accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.webp" multiple hidden></label>
     <div id="src"></div>
@@ -237,6 +268,25 @@ a.btn{text-decoration:none;display:inline-block}
   <p style="margin-top:16px">I'm looking for internships, collaborations and open-source projects where I can learn from others and build something real. If that sounds like you, say hello.</p>
   <div class="links"><a class="btn sm" href="https://github.com/balushetty07" target="_blank" rel="noopener">GitHub</a><a class="btn sm" href="https://www.linkedin.com/in/balushetty07" target="_blank" rel="noopener">LinkedIn</a><a class="btn sm" href="https://github.com/balushetty07/NoteMind-Web" target="_blank" rel="noopener">View source</a></div></div></div>
 </section></div>
+<div class="modal upload-modal" id="uploadWarning" hidden>
+  <section class="glass mcard" role="dialog" aria-modal="true" aria-labelledby="uploadWarningTitle" aria-describedby="uploadWarningIntro">
+    <div class="mhead"><b id="uploadWarningTitle">Before you upload</b><button class="btn sm" id="uploadClose" type="button" aria-label="Close upload notice">Close</button></div>
+    <p id="uploadWarningIntro" class="sub">Please review these limitations before adding files to NoteMind.</p>
+    <ol class="warning-list">
+      <li><strong>Learning prototype:</strong> NoteMind is an educational project, not a commercial-grade research system or a replacement for Google NotebookLM.</li>
+      <li><strong>AI can be incorrect:</strong> summaries, answers, quizzes and flashcards may contain mistakes or omit important details. Verify important information against your original materials.</li>
+      <li><strong>Sources are not a guarantee:</strong> source snippets show text selected by the retrieval process. They do not prove that an answer is complete or correct, and relevant passages may be missed.</li>
+      <li><strong>External AI processing:</strong> extracted note text and questions may be sent to Google's Gemini API to create embeddings and generate responses. Images and scanned PDFs may be sent for OCR. Google's service and data-handling terms apply to that processing.</li>
+      <li><strong>Local browser storage:</strong> notes, embeddings and chats are stored in this browser on this device. Clearing browser site data may remove them. The application is not a secure document vault.</li>
+      <li><strong>Basic access controls:</strong> this prototype does not provide user accounts, private workspaces or application-level rate limiting. Do not assume the public demo is suitable for confidential or high-volume use.</li>
+      <li><strong>Extraction limitations:</strong> scanned PDFs, handwriting, low-resolution images, complex tables and unusual formatting may be read incorrectly or not at all.</li>
+      <li><strong>Supported file types:</strong> TXT, Markdown (.md), PDF, PNG, JPG/JPEG and WEBP. Only upload files you have permission to use.</li>
+    </ol>
+    <div class="warning-callout"><strong>Do not upload</strong> passwords, API keys, identity documents, financial or medical records, private work documents, or other sensitive/confidential material.</div>
+    <p id="uploadSelection"></p>
+    <div class="warning-actions"><button class="btn" id="uploadCancel" type="button">Cancel</button><button class="btn pri" id="uploadContinue" type="button">I understand — continue</button></div>
+  </section>
+</div>
 <div class="modal" id="modal" hidden><div class="glass mcard" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="mhead"><b id="mt"></b><button class="btn sm" id="mclose" type="button">Close</button></div><div id="mbody"></div></div></div>
 <div id="scrim" hidden></div>
 <div id="toast"></div>
@@ -343,32 +393,49 @@ function addSource(name,status){
   t.setAttribute('aria-pressed',off.has(name)?'false':'true');
   t.onclick=e=>{e.stopPropagation();toggleOff(name,d)};
   const w=document.createElement('div');w.className='iwrap';
-  const a=document.createElement('span');a.textContent=name;
+  const a=document.createElement('span');a.textContent=name;a.title=name;
   const b=document.createElement('small');b.textContent=status;
   const x=document.createElement('button');x.type='button';x.className='x';x.textContent='\u00d7';x.title='Remove '+name;x.setAttribute('aria-label','Remove '+name);
-  x.onclick=e=>{e.stopPropagation();store=store.filter(s=>s.file!==name);d.remove();dbDel('notes',name);off.delete(name)};
+  x.onclick=e=>{e.stopPropagation();store=store.filter(s=>s.file!==name);d.remove();dbDel('notes',name);off.delete(name);syncDrop()};
   if(off.has(name))d.classList.add('off');
-  w.append(a,b);d.append(t,w,x);src.append(d);return d;
+  w.append(a,b);d.append(t,w,x);src.append(d);
+  src.scrollTop=src.scrollHeight;
+  return d;
 }
 async function addFiles(files){
   for(const f of files){
     if(!/\.(txt|md|pdf|png|jpe?g|webp)$/i.test(f.name)){toast(f.name+': use .txt, .md, .pdf or an image');continue}
-    const row=addSource(f.name,'Reading and indexing...');
+    if([...src.querySelectorAll('.item span')].some(el=>el.textContent===f.name)){
+      toast(f.name+' is already in your notes');continue;
+    }
+    const row=addSource(f.name,'Waiting to process...');
+    const tick=row.querySelector('.tick');
+    tick.disabled=true;
+    syncDrop();
     try{
       const isPdf=/\.pdf$/i.test(f.name),isImg=/\.(png|jpe?g|webp)$/i.test(f.name);
       let txt;
       if(isImg){row.querySelector('small').textContent='Reading image (OCR)...';txt=await ocrImage(f)}
       else if(isPdf){txt=await readPdf(f);if(!txt.trim())txt=await ocrPdf(f,row)}
       else txt=await f.text();
-      if(!txt.trim())throw new Error('No readable text found in '+f.name);
-      row.querySelector('small').textContent='Reading and indexing...';
+      if(!txt.trim())throw new Error('No readable text found');
+      row.querySelector('small').textContent='Creating embeddings...';
       const cs=chunk(txt);let vs=[];
       for(let i=0;i<cs.length;i+=50)vs=vs.concat((await api('embed',{texts:cs.slice(i,i+50)})).vectors);
       const ents=cs.map((t,i)=>({text:t,v:norm(vs[i])}));
       ents.forEach(e=>store.push({file:f.name,text:e.text,v:e.v}));
-      dbPut('notes',{file:f.name,chunks:ents});
+      await dbPut('notes',{file:f.name,chunks:ents});
       row.querySelector('small').textContent=cs.length+' sections ready';
-    }catch(e){row.remove();toast(e.message)}
+      tick.disabled=false;
+      syncDrop();
+      src.scrollTop=src.scrollHeight;
+    }catch(e){
+      row.classList.add('error');
+      row.querySelector('small').textContent='Could not add: '+(e.message||'processing failed');
+      tick.disabled=true;
+      syncDrop();
+      toast(f.name+': '+(e.message||'processing failed'));
+    }
   }
 }
 function md(t){
@@ -465,12 +532,46 @@ async function ask(q){
   }catch(e){w.remove();toast(e.message)}
 }
 $('#form').onsubmit=e=>{e.preventDefault();const q=$('#q').value.trim();if(!q)return;$('#q').value='';ask(q)};
-$('#file').onchange=e=>{addFiles([...e.target.files]);e.target.value=''};
+const uploadWarning=$('#uploadWarning');
+const uploadWarningCard=uploadWarning.querySelector('.mcard');
+let pendingUploadFiles=[];
+function showUploadWarning(){
+  uploadWarning.hidden=false;
+  // Reset the scroll position every time. Otherwise the long notice can reopen halfway down.
+  uploadWarning.scrollTop=0;
+  uploadWarningCard.scrollTop=0;
+  requestAnimationFrame(()=>{
+    uploadWarning.scrollTop=0;
+    uploadWarningCard.scrollTop=0;
+    $('#uploadContinue').focus({preventScroll:true});
+  });
+}
+function requestUploadConfirmation(files){
+  const selected=[...files].filter(Boolean);
+  if(!selected.length)return;
+  pendingUploadFiles=selected;
+  $('#uploadSelection').textContent=selected.length===1
+    ? 'Selected file: '+selected[0].name
+    : selected.length+' files selected';
+  showUploadWarning();
+}
+function closeUploadWarning(){uploadWarning.hidden=true;pendingUploadFiles=[]}
+$('#readUploadNotice').onclick=()=>{pendingUploadFiles=[];$('#uploadSelection').textContent='You can review this notice at any time. Choose files to start the confirmation flow.';showUploadWarning()};
+$('#uploadCancel').onclick=closeUploadWarning;
+$('#uploadClose').onclick=closeUploadWarning;
+$('#uploadContinue').onclick=()=>{
+  const files=[...pendingUploadFiles];
+  closeUploadWarning();
+  if(files.length)addFiles(files);
+};
+uploadWarning.addEventListener('click',e=>{if(e.target===uploadWarning)closeUploadWarning()});
+document.addEventListener('keydown',e=>{if(!uploadWarning.hidden&&e.key==='Escape')closeUploadWarning()});
+$('#file').onchange=e=>{const files=[...e.target.files];e.target.value='';requestUploadConfirmation(files)};
 const drop=$('#drop');
 drop.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#file').click()}};
 ['dragenter','dragover'].forEach(n=>drop.addEventListener(n,e=>{e.preventDefault();drop.classList.add('over')}));
 ['dragleave','drop'].forEach(n=>drop.addEventListener(n,e=>{e.preventDefault();drop.classList.remove('over')}));
-drop.addEventListener('drop',e=>addFiles([...e.dataTransfer.files]));
+drop.addEventListener('drop',e=>requestUploadConfirmation([...e.dataTransfer.files]));
 $('#clear').onclick=()=>{store=[];off.clear();src.innerHTML='';dbClear('notes');toast('Notes cleared')};
 const side=$('#side'),scrim=$('#scrim'),drawerBtn=$('#drawerBtn');
 function openDrawer(o){
@@ -484,9 +585,12 @@ try{window.matchMedia('(max-width:860px)').addEventListener('change',()=>openDra
 const tools=document.querySelectorAll('.tools .btn'),dropB=$('#drop b');
 function syncDrop(){
   const has=src.children.length>0;
+  const hasReady=store.length>0;
   drop.classList.toggle('mini',has);
   dropB.textContent=has?'+ Add more notes':'Drop notes here';
-  tools.forEach(b=>b.disabled=!has);
+  $('#uploadNote').classList.toggle('compact',has);
+  tools.forEach(b=>b.disabled=!hasReady);
+  $('#clear').disabled=!has;
 }
 new MutationObserver(syncDrop).observe(src,{childList:true});
 syncDrop();
@@ -640,6 +744,8 @@ async function init(){
     cur=Math.min(Math.max(m.cur||0,0),chats.length-1);render();
   }else newChat();
   ready=true;
+  syncDrop();
+  src.scrollTop=src.scrollHeight;
   if(notes.length)toast(notes.length+(notes.length>1?' notes':' note')+' restored 💾');
 }
 init();
