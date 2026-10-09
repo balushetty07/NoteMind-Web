@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 
@@ -117,6 +118,103 @@ def ocr():
             text = ""
         return jsonify(text="" if text == "NO_TEXT" else text)
     return jsonify(error="All models are busy. Try again in a minute."), 503
+
+
+def generate(prompt, as_json=False, timeout=60):
+    body = {"contents": [{"parts": [{"text": prompt}]}]}
+    if as_json:
+        body["generationConfig"] = {"responseMimeType": "application/json"}
+    for model in MODELS:
+        try:
+            r = requests.post(f"{URL}/models/{model}:generateContent", params={"key": KEY}, json=body, timeout=timeout)
+        except requests.exceptions.RequestException:
+            continue
+        if r.status_code in (404, 429, 503):
+            continue
+        if not r.ok:
+            return None, 502
+        try:
+            return r.json()["candidates"][0]["content"]["parts"][0]["text"].strip(), 200
+        except (KeyError, IndexError):
+            return None, 502
+    return None, 503
+
+
+def parse_list(text):
+    t = text.strip()
+    if t.startswith("```"):
+        t = t.strip("`")
+        if t[:4].lower() == "json":
+            t = t[4:]
+    try:
+        v = json.loads(t)
+    except ValueError:
+        return None
+    if isinstance(v, dict):
+        v = next((x for x in v.values() if isinstance(x, list)), None)
+    return v if isinstance(v, list) else None
+
+
+@app.route("/api/study", methods=["POST"])
+def study():
+    data = request.get_json(silent=True) or {}
+    mode = data.get("mode")
+    if mode not in ("summary", "quiz", "flashcards"):
+        return jsonify(error="Unknown study mode"), 400
+    raw = data.get("context", [])
+    context = [c for c in (raw[:16] if isinstance(raw, list) else []) if isinstance(c, dict)]
+    if not context:
+        return jsonify(error="Add notes first"), 400
+    if not KEY:
+        return jsonify(error="Server is missing GEMINI_API_KEY"), 500
+    ctx = "\n\n---\n\n".join(f"[Source: {str(c.get('file', ''))[:100]}]\n{str(c.get('text', ''))[:1500]}" for c in context)
+
+    if mode == "summary":
+        prompt = (
+            "You are a study assistant. Using ONLY the notes below, write a clear study summary in markdown: "
+            "a short overview paragraph, then a '## Key points' bulleted list, then a '## Important terms' "
+            "list with one-line definitions (skip this part if there are no terms). Do not add outside facts.\n\n"
+            f"NOTES:\n{ctx}"
+        )
+        text, code = generate(prompt)
+        if text is None:
+            return jsonify(error="All models are busy. Try again in a minute." if code == 503 else "Gemini could not make that. Try again."), code
+        return jsonify(summary=text)
+
+    if mode == "quiz":
+        prompt = (
+            "Create 5 multiple-choice questions that test understanding of the notes below. Use ONLY the notes. "
+            "Each question has exactly 4 options, one correct. Make the wrong options plausible and put the "
+            "correct answer at a random position. Reply with a JSON array only, shaped like "
+            '[{"q": "question", "options": ["a", "b", "c", "d"], "answer": 0, "why": "one-sentence explanation"}] '
+            "where answer is the index (0 to 3) of the correct option.\n\n"
+            f"NOTES:\n{ctx}"
+        )
+    else:
+        prompt = (
+            "Create 8 study flashcards from the notes below. Use ONLY the notes. Each card has a short front "
+            "(a term or question) and a concise back (the answer or definition). Reply with a JSON array only, "
+            'shaped like [{"front": "...", "back": "..."}].\n\n'
+            f"NOTES:\n{ctx}"
+        )
+    text, code = generate(prompt, as_json=True)
+    if text is None:
+        return jsonify(error="All models are busy. Try again in a minute." if code == 503 else "Gemini could not make that. Try again."), code
+    items = []
+    for x in parse_list(text) or []:
+        if not isinstance(x, dict):
+            continue
+        if mode == "quiz":
+            o = x.get("options")
+            a = x.get("answer")
+            if (isinstance(x.get("q"), str) and isinstance(o, list) and len(o) == 4
+                    and all(isinstance(i, str) for i in o) and isinstance(a, int) and not isinstance(a, bool) and 0 <= a < 4):
+                items.append({"q": x["q"], "options": o, "answer": a, "why": str(x.get("why", ""))[:400]})
+        elif isinstance(x.get("front"), str) and isinstance(x.get("back"), str):
+            items.append({"front": x["front"], "back": x["back"]})
+    if not items:
+        return jsonify(error="Could not build that from these notes. Try again."), 502
+    return jsonify(items=items[:10])
 
 
 @app.route("/api/title", methods=["POST"])
