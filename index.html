@@ -144,8 +144,8 @@ a.btn{text-decoration:none;display:inline-block}
 <main class="app">
   <aside class="glass side">
     <div><h1>Your notes</h1><p class="sub">Add your notes, then ask questions. Every answer shows where it came from.</p></div>
-    <label class="drop" id="drop" tabindex="0"><b>Drop notes here</b><span>or click to choose .txt and .md files</span>
-      <input id="file" type="file" accept=".txt,.md" multiple hidden></label>
+    <label class="drop" id="drop" tabindex="0"><b>Drop notes here</b><span>or click to choose .txt, .md and .pdf files</span>
+      <input id="file" type="file" accept=".txt,.md,.pdf" multiple hidden></label>
     <div id="src"></div>
     <button class="btn" id="clear">Clear notes</button>
   </aside>
@@ -186,10 +186,21 @@ a.btn{text-decoration:none;display:inline-block}
   <div class="links"><a class="btn sm" href="https://github.com/balushetty07" target="_blank" rel="noopener">GitHub</a><a class="btn sm" href="https://www.linkedin.com/in/balushetty07" target="_blank" rel="noopener">LinkedIn</a><a class="btn sm" href="https://github.com/balushetty07/NoteMind-Web" target="_blank" rel="noopener">View source</a></div></div></div>
 </section></div>
 <div id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 const chat=$('#chat'),src=$('#src');
 let store=[],chats=[],cur=0;
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+async function readPdf(f){
+  const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
+  const pages=[];
+  for(let i=1;i<=pdf.numPages;i++){
+    const t=(await(await pdf.getPage(i)).getTextContent()).items.map(x=>x.str).join(' ').trim();
+    if(t)pages.push('[Page '+i+']\n'+t);
+  }
+  return pages.join('\n\n');
+}
 const norm=v=>{const m=Math.hypot(...v)||1;return v.map(x=>x/m)};
 const dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0);
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),3500)}
@@ -219,10 +230,13 @@ function addSource(name,status){
 }
 async function addFiles(files){
   for(const f of files){
-    if(!/\.(txt|md)$/i.test(f.name)){toast(f.name+': only .txt and .md work for now');continue}
+    if(!/\.(txt|md|pdf)$/i.test(f.name)){toast(f.name+': use .txt, .md or .pdf');continue}
     const row=addSource(f.name,'Reading and indexing...');
     try{
-      const cs=chunk(await f.text());let vs=[];
+      const isPdf=/\.pdf$/i.test(f.name);
+      const txt=isPdf?await readPdf(f):await f.text();
+      if(!txt.trim())throw new Error(f.name+' has no text (scanned?). OCR is coming next \ud83d\ude09');
+      const cs=chunk(txt);let vs=[];
       for(let i=0;i<cs.length;i+=50)vs=vs.concat((await api('embed',{texts:cs.slice(i,i+50)})).vectors);
       cs.forEach((t,i)=>store.push({file:f.name,text:t,v:norm(vs[i])}));
       row.querySelector('small').textContent=cs.length+' sections ready';
