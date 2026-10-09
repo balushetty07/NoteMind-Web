@@ -68,12 +68,18 @@ h1{font-size:28px;font-weight:700;letter-spacing:-.03em}
 .btn.on{background:rgba(255,255,255,.26)}
 .btn.sm{padding:7px 14px;font-size:13px}
 a.btn{text-decoration:none;display:inline-block}
-.chead{flex-direction:row;align-items:center;gap:12px;padding:16px 22px 0;flex:none}
+.glass>.chead{display:flex;flex-direction:row;align-items:center;gap:12px;padding:16px 22px 0;flex:none;z-index:5}
 #chips{display:flex;gap:8px;overflow-x:auto;flex:1;min-width:0;padding:4px 0}
 .chip{flex:none;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid var(--rim);background:rgba(255,255,255,.07);color:inherit;border-radius:999px;padding:7px 14px;font:inherit;font-size:13px;cursor:pointer;transition:transform .45s var(--spring)}
 .chip:hover{transform:scale(1.07)}.chip:active{transform:scale(.9)}
 .chip.on{background:rgba(255,255,255,.22);font-weight:600}
-.acts{display:flex;gap:8px;flex:none}
+.acts{position:relative;flex:none}
+.dots3{width:42px;height:42px;padding:0;display:grid;place-items:center}
+.menu{position:absolute;right:0;top:calc(100% + 10px);min-width:190px;padding:8px;border-radius:22px;background:rgba(28,30,42,.88);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);border:1px solid var(--rim);box-shadow:0 20px 50px rgba(0,0,0,.45);transform-origin:top right;animation:pop .45s var(--spring);z-index:10}
+.menu button{display:block;width:100%;text-align:left;padding:11px 14px;border:0;border-radius:14px;background:none;color:inherit;font:inherit;cursor:pointer;transition:transform .4s var(--spring),background .2s}
+.menu button:hover{background:rgba(255,255,255,.14);transform:scale(1.03)}
+.menu button:active{transform:scale(.95)}
+.menu .danger{color:#ff7a7a}
 .about{margin:20px;padding:34px 38px;overflow-y:auto;flex:1;min-height:0;gap:26px}
 .about>*{flex:none}
 .about h2{font-size:28px;letter-spacing:-.03em}
@@ -101,6 +107,9 @@ a.btn{text-decoration:none;display:inline-block}
 [data-theme=light] .composer input{color:#161824;background:rgba(255,255,255,.65)}
 [data-theme=light] .composer input::placeholder{color:rgba(22,24,36,.45)}
 [data-theme=light] .dots i{background:#161824}
+[data-theme=light] .menu{background:rgba(255,255,255,.93);box-shadow:0 20px 50px rgba(70,80,130,.25)}
+[data-theme=light] .menu button:hover{background:rgba(22,24,36,.07)}
+[data-theme=light] .menu .danger{color:#d92d2d}
 [data-theme=light] #toast{background:rgba(255,255,255,.9);color:#161824}
 @media(max-width:860px){.shell{height:auto;min-height:100%}.bar{padding-left:18px}.chead{flex-wrap:wrap}.about{padding:24px}}
 </style></head>
@@ -112,17 +121,15 @@ a.btn{text-decoration:none;display:inline-block}
     <button class="btn sm" id="theme">Light mode</button></header>
 <main class="app">
   <aside class="glass side">
-    <div><h1>NoteMind</h1><p class="sub">Add your notes, then ask questions. Every answer shows where it came from.</p></div>
+    <div><h1>Your notes</h1><p class="sub">Add your notes, then ask questions. Every answer shows where it came from.</p></div>
     <label class="drop" id="drop" tabindex="0"><b>Drop notes here</b><span>or click to choose .txt and .md files</span>
       <input id="file" type="file" accept=".txt,.md" multiple hidden></label>
     <div id="src"></div>
     <button class="btn" id="clear">Clear notes</button>
   </aside>
   <section class="glass chatbox">
-    <div class="chead"><div id="chips"></div><div class="acts">
-      <button class="btn sm" id="newc" type="button">New chat</button>
-      <button class="btn sm" id="clrc" type="button">Clear chat</button>
-      <button class="btn sm" id="delc" type="button">Delete chat</button></div></div>
+    <div class="chead"><div id="chips"></div><div class="acts"><button class="btn dots3" id="menuBtn" type="button" aria-label="Chat options" aria-haspopup="true" aria-expanded="false"><svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor"><circle cx="3" cy="9" r="1.7"/><circle cx="9" cy="9" r="1.7"/><circle cx="15" cy="9" r="1.7"/></svg></button>
+      <div class="menu" id="menu" hidden><button id="newc" type="button">New chat</button><button id="clrc" type="button">Clear chat</button><button id="delc" class="danger" type="button">Delete chat</button></div></div></div>
     <div id="chat"><div class="empty" id="empty"><h2>Ask anything about your notes</h2><p>Add a note on the left, then type a question below.</p></div></div>
     <form class="composer" id="form"><input id="q" placeholder="Ask about your notes" autocomplete="off"><button class="btn pri">Send</button></form>
   </section>
@@ -227,13 +234,15 @@ function render(){
   if(!c.msgs.length)chat.innerHTML='<div class="empty" id="empty"><h2>Ask anything about your notes</h2><p>Add a note on the left, then type a question below.</p></div>';
   else c.msgs.forEach(m=>draw(m.role,m.text,m.cites));
 }
-function newChat(){chats.push({title:'New chat',msgs:[]});cur=chats.length-1;render()}
+let cid=0;
+function mk(){const id=++cid;return {id,title:'Chat '+id,msgs:[],named:false}}
+function newChat(){const c=chats[cur];if(c&&!c.msgs.length){$('#q').focus();return}chats.push(mk());cur=chats.length-1;render();$('#q').focus()}
 async function ask(q){
   if(!store.length)return toast('Add a note first');
   const c=chats[cur];
   const hist=c.msgs.slice(-6).map(m=>({role:m.role==='ai'?'assistant':'user',text:m.text}));
   c.msgs.push({role:'user',text:q});
-  if(c.title==='New chat')c.title=q.slice(0,24);
+  if(!c.named){c.named=true;c.title=q.slice(0,24)}
   chips();draw('user',q);const w=typing();
   try{
     const qv=norm((await api('embed',{texts:[q]})).vectors[0]);
@@ -260,8 +269,8 @@ document.addEventListener('pointermove',e=>{
   });
 });
 $('#newc').onclick=newChat;
-$('#clrc').onclick=()=>{chats[cur]={title:'New chat',msgs:[]};render()};
-$('#delc').onclick=()=>{chats.splice(cur,1);if(!chats.length)chats.push({title:'New chat',msgs:[]});cur=Math.min(cur,chats.length-1);render();toast('Chat deleted')};
+$('#clrc').onclick=()=>{chats[cur]={id:chats[cur].id,title:'Chat '+chats[cur].id,msgs:[],named:false};render()};
+$('#delc').onclick=()=>{chats.splice(cur,1);if(!chats.length)chats.push(mk());cur=Math.min(cur,chats.length-1);render();toast('Chat deleted')};
 function view(v){
   document.querySelector('.app').hidden=v!=='nb';$('#about').hidden=v!=='about';
   document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
@@ -275,6 +284,12 @@ function setTheme(t){
 let saved='dark';try{saved=localStorage.getItem('theme')||'dark'}catch(e){}
 setTheme(saved);
 $('#theme').onclick=()=>setTheme(document.documentElement.dataset.theme==='light'?'dark':'light');
+const menu=$('#menu'),mb=$('#menuBtn');
+function closeMenu(){menu.hidden=true;mb.setAttribute('aria-expanded','false')}
+mb.onclick=e=>{e.stopPropagation();menu.hidden=!menu.hidden;mb.setAttribute('aria-expanded',String(!menu.hidden))};
+menu.addEventListener('click',closeMenu);
+document.addEventListener('click',e=>{if(!menu.contains(e.target))closeMenu()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu()});
 newChat();
 </script>
 </body></html>
