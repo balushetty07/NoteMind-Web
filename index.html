@@ -144,8 +144,8 @@ a.btn{text-decoration:none;display:inline-block}
 <main class="app">
   <aside class="glass side">
     <div><h1>Your notes</h1><p class="sub">Add your notes, then ask questions. Every answer shows where it came from.</p></div>
-    <label class="drop" id="drop" tabindex="0"><b>Drop notes here</b><span>or click to choose .txt, .md and .pdf files</span>
-      <input id="file" type="file" accept=".txt,.md,.pdf" multiple hidden></label>
+    <label class="drop" id="drop" tabindex="0"><b>Drop notes here</b><span>or click to choose .txt, .md, .pdf or image files</span>
+      <input id="file" type="file" accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.webp" multiple hidden></label>
     <div id="src"></div>
     <button class="btn" id="clear">Clear notes</button>
   </aside>
@@ -201,6 +201,36 @@ async function readPdf(f){
   }
   return pages.join('\n\n');
 }
+const OCR_MAX_PAGES=20;
+function toJpeg(src,w,h,max=1600){
+  const k=Math.min(1,max/Math.max(w,h));
+  const c=document.createElement('canvas');c.width=Math.round(w*k);c.height=Math.round(h*k);
+  const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+  x.drawImage(src,0,0,c.width,c.height);
+  return c.toDataURL('image/jpeg',0.8);
+}
+async function ocr(dataUrl){return (await api('ocr',{image:dataUrl})).text||''}
+async function ocrImage(f){
+  const bmp=await createImageBitmap(f);
+  return ocr(toJpeg(bmp,bmp.width,bmp.height));
+}
+async function ocrPdf(f,row){
+  const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
+  const n=Math.min(pdf.numPages,OCR_MAX_PAGES);
+  if(pdf.numPages>n)toast('Only the first '+n+' pages will be read with OCR');
+  const pages=[];
+  for(let i=1;i<=n;i++){
+    row.querySelector('small').textContent='OCR page '+i+' of '+n+'...';
+    const pg=await pdf.getPage(i);
+    const v1=pg.getViewport({scale:1});
+    const v=pg.getViewport({scale:Math.min(3,1600/Math.max(v1.width,v1.height))});
+    const c=document.createElement('canvas');c.width=Math.round(v.width);c.height=Math.round(v.height);
+    await pg.render({canvasContext:c.getContext('2d'),viewport:v}).promise;
+    const t=(await ocr(c.toDataURL('image/jpeg',0.8))).trim();
+    if(t)pages.push('[Page '+i+']\n'+t);
+  }
+  return pages.join('\n\n');
+}
 const norm=v=>{const m=Math.hypot(...v)||1;return v.map(x=>x/m)};
 const dot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0);
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),3500)}
@@ -230,12 +260,16 @@ function addSource(name,status){
 }
 async function addFiles(files){
   for(const f of files){
-    if(!/\.(txt|md|pdf)$/i.test(f.name)){toast(f.name+': use .txt, .md or .pdf');continue}
+    if(!/\.(txt|md|pdf|png|jpe?g|webp)$/i.test(f.name)){toast(f.name+': use .txt, .md, .pdf or an image');continue}
     const row=addSource(f.name,'Reading and indexing...');
     try{
-      const isPdf=/\.pdf$/i.test(f.name);
-      const txt=isPdf?await readPdf(f):await f.text();
-      if(!txt.trim())throw new Error(f.name+' has no text (scanned?). OCR is coming next \ud83d\ude09');
+      const isPdf=/\.pdf$/i.test(f.name),isImg=/\.(png|jpe?g|webp)$/i.test(f.name);
+      let txt;
+      if(isImg){row.querySelector('small').textContent='Reading image (OCR)...';txt=await ocrImage(f)}
+      else if(isPdf){txt=await readPdf(f);if(!txt.trim())txt=await ocrPdf(f,row)}
+      else txt=await f.text();
+      if(!txt.trim())throw new Error('No readable text found in '+f.name);
+      row.querySelector('small').textContent='Reading and indexing...';
       const cs=chunk(txt);let vs=[];
       for(let i=0;i<cs.length;i+=50)vs=vs.concat((await api('embed',{texts:cs.slice(i,i+50)})).vectors);
       cs.forEach((t,i)=>store.push({file:f.name,text:t,v:norm(vs[i])}));

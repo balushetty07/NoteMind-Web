@@ -84,6 +84,41 @@ def answer():
     return jsonify(error="All models are busy. Try again in a minute."), 503
 
 
+@app.route("/api/ocr", methods=["POST"])
+def ocr():
+    data = request.get_json(silent=True) or {}
+    img = str(data.get("image", ""))
+    if "," in img:
+        img = img.split(",", 1)[1]
+    if not img:
+        return jsonify(error="No image received"), 400
+    if len(img) > 3_000_000:
+        return jsonify(error="Image is too big. Try a smaller one."), 413
+    if not KEY:
+        return jsonify(error="Server is missing GEMINI_API_KEY"), 500
+    prompt = (
+        "Transcribe all the text in this image exactly as written, including handwriting. "
+        "Keep the line breaks. Use markdown for headings, lists or tables if they are clear. "
+        "Reply with only the transcription. If there is no readable text, reply with exactly NO_TEXT."
+    )
+    body = {"contents": [{"parts": [{"text": prompt}, {"inline_data": {"mime_type": "image/jpeg", "data": img}}]}]}
+    for model in MODELS:
+        try:
+            r = requests.post(f"{URL}/models/{model}:generateContent", params={"key": KEY}, json=body, timeout=60)
+        except requests.exceptions.RequestException:
+            continue
+        if r.status_code in (404, 429, 503):
+            continue
+        if not r.ok:
+            return jsonify(error="Gemini could not read this image. Try again."), 502
+        try:
+            text = r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+        except (KeyError, IndexError):
+            text = ""
+        return jsonify(text="" if text == "NO_TEXT" else text)
+    return jsonify(error="All models are busy. Try again in a minute."), 503
+
+
 @app.route("/api/title", methods=["POST"])
 def title():
     q = str((request.get_json(silent=True) or {}).get("question", "")).strip()[:300]
