@@ -144,7 +144,8 @@ a.btn{text-decoration:none;display:inline-block}
 [data-theme=light] #toast{background:rgba(255,255,255,.9);color:#161824}
 [data-theme=light] #scrim{background:rgba(232,235,246,.6)}
 .bar b{display:flex;align-items:center;gap:10px}
-.logo{display:block;width:26px;height:26px;border-radius:50%;background:conic-gradient(from 210deg,#2ecc71,#3b82f6,#ec4899,#f59e0b,#2ecc71);box-shadow:inset 0 0 0 3px rgba(255,255,255,.28),0 4px 16px rgba(59,130,246,.5);transition:transform .7s var(--spring)}
+.logo{display:grid;place-items:center;flex:none;width:32px;height:32px;border-radius:11px;background:linear-gradient(145deg,#34d399,#3b82f6 58%,#8b5cf6);box-shadow:inset 0 1px 1px rgba(255,255,255,.55),0 5px 18px rgba(59,130,246,.28);transition:transform .7s var(--spring)}
+.logo svg{width:21px;height:21px;color:#fff}
 .bar b:hover .logo{transform:rotate(120deg) scale(1.2)}
 .sugs{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:20px}
 .sug{max-width:none;font-size:13px;padding:8px 16px}
@@ -211,13 +212,122 @@ a.btn{text-decoration:none;display:inline-block}
   .chead{flex-wrap:wrap}
   .about{padding:24px}
 }
+
+
+/* NoteMind responsive + accessibility refinements */
+.quick-upload{display:none}
+.upload-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.upload-actions .btn{padding:8px 14px}
+.camera-btn{display:none}
+.upload-hint{display:block;margin-top:10px;color:rgba(244,245,250,.55);font-size:11px;letter-spacing:.02em}
+.note-search{width:100%;flex:none;padding:11px 14px;border:1px solid var(--rim);border-radius:15px;background:rgba(255,255,255,.07);color:inherit;font:inherit;min-width:0}
+.note-search::placeholder{color:rgba(244,245,250,.48)}
+.note-search:focus{outline:2px solid rgba(96,165,250,.85);outline-offset:1px}
+.theme-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.theme-choice{display:flex;align-items:center;gap:12px;text-align:left;min-width:0;padding:14px;border:1px solid var(--rim);border-radius:18px;background:rgba(255,255,255,.07);color:inherit;font:inherit;cursor:pointer;transition:transform .2s ease,background .2s ease,border-color .2s ease}
+.theme-choice:hover{background:rgba(255,255,255,.13);transform:translateY(-1px)}
+.theme-choice.active{border-color:#60a5fa;background:rgba(59,130,246,.17);box-shadow:inset 0 0 0 1px rgba(96,165,250,.2)}
+.theme-swatch{display:block;flex:none;width:34px;height:34px;border-radius:12px;border:1px solid rgba(255,255,255,.25);box-shadow:inset 0 1px 1px rgba(255,255,255,.28)}
+.theme-swatch.dark{background:linear-gradient(135deg,#080b14,#26334c 55%,#8b5cf6)}
+.theme-swatch.light{background:linear-gradient(135deg,#fff,#e2e8f0 55%,#93c5fd)}
+.theme-swatch.ocean{background:linear-gradient(135deg,#07131e,#0e7490 55%,#3b82f6)}
+.theme-swatch.forest{background:linear-gradient(135deg,#07150f,#166534 55%,#a3e635)}
+.theme-swatch.sunset{background:linear-gradient(135deg,#1b0d17,#c2415a 55%,#fb923c)}
+.theme-choice strong{display:block;font-size:14px}
+.theme-choice small{display:block;font-size:11px;opacity:.7;margin-top:2px}
+[data-theme=light] .note-search{color:#161824;background:rgba(255,255,255,.72)}
+[data-theme=light] .note-search::placeholder{color:rgba(22,24,36,.48)}
+[data-theme=light] .theme-choice{background:rgba(255,255,255,.55)}
+[data-theme=light] .theme-choice:hover{background:#fff}
+[data-theme=light] .theme-choice.active{background:rgba(59,130,246,.1)}
+[data-theme=ocean],[data-theme=forest],[data-theme=sunset]{color-scheme:dark}
+[data-theme=ocean]{--rim:rgba(125,211,252,.22)}
+[data-theme=ocean] body{color:#e7f7ff;background:#06131e}
+[data-theme=ocean] .orb{filter:blur(80px) hue-rotate(24deg)}
+[data-theme=ocean] .btn.pri{background:linear-gradient(135deg,#0891b2,#2563eb 60%,#6366f1)}
+[data-theme=ocean] .tick.on{background:linear-gradient(135deg,#0891b2,#3b82f6)}
+[data-theme=forest]{--rim:rgba(134,239,172,.2)}
+[data-theme=forest] body{color:#effff3;background:#07140d}
+[data-theme=forest] .orb{filter:blur(80px) hue-rotate(78deg)}
+[data-theme=forest] .btn.pri{background:linear-gradient(135deg,#059669,#16a34a 60%,#84cc16)}
+[data-theme=forest] .tick.on{background:linear-gradient(135deg,#059669,#65a30d)}
+[data-theme=sunset]{--rim:rgba(253,186,116,.22)}
+[data-theme=sunset] body{color:#fff5f1;background:#1a0d13}
+[data-theme=sunset] .orb{filter:blur(80px) hue-rotate(300deg)}
+[data-theme=sunset] .btn.pri{background:linear-gradient(135deg,#f97316,#e11d48 60%,#9333ea)}
+[data-theme=sunset] .tick.on{background:linear-gradient(135deg,#f97316,#e11d48)}
+[data-theme=ocean] .item,[data-theme=forest] .item,[data-theme=sunset] .item{background:rgba(255,255,255,.055)}
+[data-theme=ocean] .msg.ai,[data-theme=forest] .msg.ai,[data-theme=sunset] .msg.ai{background:rgba(255,255,255,.07)}
+@media(max-width:860px){
+  html,body{height:100%;min-height:100%;overflow:hidden}
+  body{overscroll-behavior:none}
+  .shell{height:100dvh;min-height:0}
+  .bar{margin:10px 10px 0;padding:9px 10px;border-radius:24px;gap:7px;justify-content:space-between}
+  .bar b{font-size:18px;letter-spacing:-.02em;gap:8px}
+  #quickUpload{display:inline-flex;align-items:center;justify-content:center;min-height:40px}
+  #drawerBtn{display:inline-flex;align-items:center;justify-content:center;min-height:40px}
+  .btn.sm{padding:8px 11px;font-size:13px;min-height:40px}
+  .app{flex:1;min-height:0;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);padding:10px;gap:10px}
+  .chatbox{min-width:0;min-height:0;border-radius:24px}
+  .side{width:min(390px,92vw);max-width:92vw;max-height:100dvh;padding:20px;gap:14px;border-radius:0 26px 26px 0;padding-bottom:calc(20px + env(safe-area-inset-bottom));overscroll-behavior:contain}
+  .drop{padding:17px 13px;border-radius:20px}
+  .drop:hover,.drop.over{transform:none}
+  .upload-actions .btn{min-height:42px}
+  .camera-btn{display:inline-flex}
+  #src{overscroll-behavior:contain}
+  .item{padding:11px 38px 11px 12px;gap:8px}
+  .item span{white-space:normal;overflow-wrap:anywhere;padding-right:0}
+  .tick{width:26px;height:26px}
+  #chat{padding:18px 14px;gap:12px;overscroll-behavior:contain}
+  .msg{max-width:96%;padding:12px 14px;overflow-wrap:anywhere}
+  .glass>.chead{padding:10px 12px 0;gap:8px}
+  .composer{gap:8px;padding:10px 10px calc(10px + env(safe-area-inset-bottom))}
+  .composer input{font-size:16px;padding:12px 15px;min-width:0;min-height:44px}
+  .composer input:focus{transform:none}
+  .composer .btn{min-height:44px;padding:10px 16px}
+  .about{margin:10px;padding:20px;gap:20px;border-radius:24px}
+  .about h2{font-size:24px}
+  .mcard{width:100%;max-height:calc(100dvh - 24px);padding:20px;gap:14px}
+  .modal{padding:12px}
+  .warning-actions{position:sticky;bottom:-20px;padding:14px 0 0;margin-top:0;background:linear-gradient(to bottom,transparent,rgba(20,22,32,.96) 28%);z-index:2}
+  [data-theme=light] .warning-actions{background:linear-gradient(to bottom,transparent,rgba(255,255,255,.97) 28%)}
+  .warning-actions .btn{min-height:44px}
+  #toast{bottom:calc(16px + env(safe-area-inset-bottom));max-width:calc(100vw - 28px);text-align:center}
+}
+@media(max-width:540px){
+  .bar{flex-wrap:wrap;justify-content:flex-start}
+  #drawerBtn{order:0;flex:0 0 42px}
+  .bar b{order:1;flex:1 1 calc(42% - 10px);min-width:100px}
+  #quickUpload{order:2;flex:0 0 auto}
+  .bar .nav{order:3;flex:1 1 70px;text-align:center}
+  #theme{order:4;flex:1 1 105px}
+  .app{padding:8px;gap:8px}
+  #chat{padding:14px 10px}
+  .empty h2{font-size:22px}
+  .composer{padding:8px 8px calc(8px + env(safe-area-inset-bottom))}
+  .composer input{padding:11px 13px}
+  .composer .btn{padding:10px 13px}
+  .theme-options{grid-template-columns:1fr}
+  .warning-actions{justify-content:stretch}
+  .warning-actions .btn{flex:1}
+  .mhead b{font-size:19px}
+  .tools .btn{padding:9px 4px;font-size:12px}
+  .sugs{gap:7px;margin-top:14px}
+  .sug{font-size:12px;padding:8px 11px}
+}
+@media(hover:none){
+  .btn:hover,.chip:hover,.cite:hover,.theme-choice:hover{transform:none}
+  .drop:hover{transform:none}
+}
+
 </style></head>
 <body>
 <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div><div class="orb o4"></div>
-<div class="shell"><header class="glass bar"><button class="btn sm" id="drawerBtn" type="button" aria-label="Open notes" aria-expanded="false">☰</button><b><i class="logo"></i>NoteMind</b>
-    <button class="btn sm nav on" data-v="nb">Notebook</button>
-    <button class="btn sm nav" data-v="about">About</button>
-    <button class="btn sm" id="theme">Light mode</button></header>
+<div class="shell"><header class="glass bar"><button class="btn sm" id="drawerBtn" type="button" aria-label="Open notes" aria-expanded="false">☰</button><b><i class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3.75h7l4 4V20a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 20V5.25A1.5 1.5 0 0 1 7.5 3.75Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 4v4h4M9 12h6M9 15.5h6M9 19h3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></i>NoteMind</b>
+    <button class="btn sm quick-upload" id="quickUpload" type="button">＋ Add files</button>
+    <button class="btn sm nav on" data-v="nb" type="button">Notebook</button>
+    <button class="btn sm nav" data-v="about" type="button">About</button>
+    <button class="btn sm" id="theme" type="button" aria-haspopup="dialog">🎨 Theme</button></header>
 <main class="app">
   <aside class="glass side" id="side">
     <div><h1>Your notes</h1><p class="sub">Add your notes, then ask questions. Tick a note to include or exclude it. Every answer shows where it came from.</p></div>
@@ -226,8 +336,12 @@ a.btn{text-decoration:none;display:inline-block}
       <p>NoteMind is a student-built learning prototype. AI can be wrong, and retrieved snippets may miss context. Text and images may be sent to Google Gemini for processing. <strong>Do not upload confidential or sensitive information.</strong></p>
       <button class="notice-full" id="readUploadNotice" type="button">Read full limitations</button>
     </div>
-    <label class="drop" id="drop" tabindex="0"><b>Drop notes here</b><span>or click to choose .txt, .md, .pdf or image files</span>
-      <input id="file" type="file" accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.webp" multiple hidden></label>
+    <div class="drop" id="drop" tabindex="0" aria-label="Add notes to NoteMind"><b>Drop notes here</b><span>Choose files from your device or drop them here</span>
+      <div class="upload-actions"><button class="btn sm" id="chooseFiles" type="button">📁 Choose files</button><button class="btn sm camera-btn" id="takePhoto" type="button">📷 Take photo</button></div>
+      <small class="upload-hint" id="uploadHint">TXT · MD · PDF · PNG · JPG · WEBP</small>
+      <input id="file" type="file" accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.webp" multiple hidden>
+      <input id="cameraFile" type="file" accept="image/*" capture="environment" hidden></div>
+    <input id="noteSearch" class="note-search" type="search" placeholder="Search uploaded notes…" aria-label="Search uploaded notes" autocomplete="off">
     <div id="src"></div>
     <div class="tools"><button class="btn sm" type="button" data-t="summary">Summary</button><button class="btn sm" type="button" data-t="quiz">Quiz</button><button class="btn sm" type="button" data-t="flashcards">Flashcards</button></div>
     <button class="btn" id="clear">Clear notes</button>
@@ -398,7 +512,7 @@ function addSource(name,status){
   const x=document.createElement('button');x.type='button';x.className='x';x.textContent='\u00d7';x.title='Remove '+name;x.setAttribute('aria-label','Remove '+name);
   x.onclick=e=>{e.stopPropagation();store=store.filter(s=>s.file!==name);d.remove();dbDel('notes',name);off.delete(name);syncDrop()};
   if(off.has(name))d.classList.add('off');
-  w.append(a,b);d.append(t,w,x);src.append(d);
+  w.append(a,b);d.append(t,w,x);src.append(d);applyNoteSearch();
   src.scrollTop=src.scrollHeight;
   return d;
 }
@@ -549,6 +663,7 @@ function showUploadWarning(){
 function requestUploadConfirmation(files){
   const selected=[...files].filter(Boolean);
   if(!selected.length)return;
+  if(window.matchMedia('(max-width:860px)').matches && typeof openDrawer==='function')openDrawer(false);
   pendingUploadFiles=selected;
   $('#uploadSelection').textContent=selected.length===1
     ? 'Selected file: '+selected[0].name
@@ -566,9 +681,22 @@ $('#uploadContinue').onclick=()=>{
 };
 uploadWarning.addEventListener('click',e=>{if(e.target===uploadWarning)closeUploadWarning()});
 document.addEventListener('keydown',e=>{if(!uploadWarning.hidden&&e.key==='Escape')closeUploadWarning()});
-$('#file').onchange=e=>{const files=[...e.target.files];e.target.value='';requestUploadConfirmation(files)};
+function handleFileInput(input){
+  input.onchange=e=>{
+    const files=[...e.target.files];
+    e.target.value='';
+    if(files.length)requestUploadConfirmation(files);
+  };
+}
+const fileInput=$('#file'),cameraInput=$('#cameraFile');
+handleFileInput(fileInput);handleFileInput(cameraInput);
 const drop=$('#drop');
-drop.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#file').click()}};
+const openFilePicker=()=>fileInput.click();
+$('#chooseFiles').onclick=openFilePicker;
+$('#quickUpload').onclick=openFilePicker;
+$('#takePhoto').onclick=()=>cameraInput.click();
+drop.addEventListener('click',e=>{if(!e.target.closest('button'))openFilePicker()});
+drop.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openFilePicker()}};
 ['dragenter','dragover'].forEach(n=>drop.addEventListener(n,e=>{e.preventDefault();drop.classList.add('over')}));
 ['dragleave','drop'].forEach(n=>drop.addEventListener(n,e=>{e.preventDefault();drop.classList.remove('over')}));
 drop.addEventListener('drop',e=>requestUploadConfirmation([...e.dataTransfer.files]));
@@ -593,6 +721,14 @@ function syncDrop(){
   $('#clear').disabled=!has;
 }
 new MutationObserver(syncDrop).observe(src,{childList:true});
+function applyNoteSearch(){
+  const q=$('#noteSearch').value.trim().toLocaleLowerCase();
+  src.querySelectorAll('.item').forEach(row=>{
+    const name=row.querySelector('.iwrap span')?.textContent||'';
+    row.hidden=!name.toLocaleLowerCase().includes(q);
+  });
+}
+$('#noteSearch').addEventListener('input',applyNoteSearch);
 syncDrop();
 function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
 const modal=$('#modal'),mbody=$('#mbody');let fcKey=null,busy=false;
@@ -703,14 +839,37 @@ function view(v){
   document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
 }
 document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>view(b.dataset.v));
+const themeChoices=[
+  {id:'dark',name:'Midnight',icon:'🌙',hint:'Original dark glass'},
+  {id:'light',name:'Light',icon:'☀️',hint:'Bright and clean'},
+  {id:'ocean',name:'Ocean',icon:'🌊',hint:'Cool blue tones'},
+  {id:'forest',name:'Forest',icon:'🌿',hint:'Green contrast'},
+  {id:'sunset',name:'Sunset',icon:'🌅',hint:'Warm evening tones'}
+];
 function setTheme(t){
+  if(!themeChoices.some(x=>x.id===t))t='dark';
   document.documentElement.dataset.theme=t;
-  $('#theme').textContent=t==='light'?'Dark mode':'Light mode';
+  const choice=themeChoices.find(x=>x.id===t);
+  $('#theme').title='Current appearance: '+choice.name+'. Open to change theme.';
   try{localStorage.setItem('theme',t)}catch(e){}
 }
 let saved='dark';try{saved=localStorage.getItem('theme')||'dark'}catch(e){}
 setTheme(saved);
-$('#theme').onclick=()=>setTheme(document.documentElement.dataset.theme==='light'?'dark':'light');
+$('#theme').onclick=()=>{
+  openModal('Choose a theme');
+  const grid=el('div','theme-options');
+  themeChoices.forEach(t=>{
+    const b=el('button','theme-choice'+(document.documentElement.dataset.theme===t.id?' active':''));
+    b.type='button';b.setAttribute('aria-pressed',String(document.documentElement.dataset.theme===t.id));
+    const swatch=el('span','theme-swatch '+t.id);
+    const copy=el('span','theme-copy');
+    copy.append(el('strong','',t.icon+' '+t.name),el('small','',t.hint));
+    b.append(swatch,copy);
+    b.onclick=()=>{setTheme(t.id);closeModal();toast('Theme changed to '+t.name)};
+    grid.append(b);
+  });
+  mbody.append(grid);
+};
 const menu=$('#menu'),mb=$('#menuBtn');
 function closeMenu(){menu.hidden=true;mb.setAttribute('aria-expanded','false')}
 mb.onclick=e=>{e.stopPropagation();menu.hidden=!menu.hidden;mb.setAttribute('aria-expanded',String(!menu.hidden))};
