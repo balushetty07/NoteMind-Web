@@ -16,7 +16,9 @@ if not KEY:
 
 URL = "https://generativelanguage.googleapis.com/v1beta"
 EMBED = "gemini-embedding-001"
-MODELS = ["gemini-flash-latest", "gemini-3.5-flash", "gemini-3.6-flash", "gemini-3.1-flash-lite"]
+# Current GenerateContent model IDs, ordered from newest to lower-cost fallbacks.
+# Keep this list refreshed against the official Gemini API model catalogue.
+MODELS = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"]
 
 
 @app.route("/")
@@ -67,6 +69,7 @@ def answer():
         "Mention which source you used. If the context doesn't contain the answer, say you don't know.\n\n"
         f"CONTEXT:\n{ctx}\n\nCHAT SO FAR:\n{chat}\n\nQUESTION: {question}\n\nANSWER:"
     )
+    empty_response = False
     for model in MODELS:
         try:
             r = requests.post(
@@ -81,7 +84,19 @@ def answer():
             continue
         if not r.ok:
             return jsonify(error="Gemini returned an error. Try again."), 502
-        return jsonify(reply=r.json()["candidates"][0]["content"]["parts"][0]["text"].strip())
+        try:
+            candidates = r.json().get("candidates", [])
+            reply = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+        except (ValueError, KeyError, IndexError, TypeError, AttributeError):
+            reply = ""
+        if isinstance(reply, str) and reply.strip():
+            return jsonify(reply=reply.strip())
+        # A successful HTTP response can still contain no text, for example if
+        # the response was blocked or returned in an unexpected shape. Try the
+        # next configured model instead of exposing an unhandled exception.
+        empty_response = True
+    if empty_response:
+        return jsonify(error="No model returned a usable answer. Try rephrasing the question."), 502
     return jsonify(error="All models are busy. Try again in a minute."), 503
 
 
@@ -114,7 +129,7 @@ def ocr():
             return jsonify(error="Gemini could not read this image. Try again."), 502
         try:
             text = r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
-        except (KeyError, IndexError):
+        except (KeyError, IndexError, TypeError, ValueError):
             text = ""
         return jsonify(text="" if text == "NO_TEXT" else text)
     return jsonify(error="All models are busy. Try again in a minute."), 503
@@ -135,7 +150,7 @@ def generate(prompt, as_json=False, timeout=60):
             return None, 502
         try:
             return r.json()["candidates"][0]["content"]["parts"][0]["text"].strip(), 200
-        except (KeyError, IndexError):
+        except (KeyError, IndexError, TypeError, ValueError):
             return None, 502
     return None, 503
 
