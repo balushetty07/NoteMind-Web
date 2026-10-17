@@ -322,10 +322,6 @@ NoteMind Web is a learning prototype, so these limitations are part of its curre
 | Notes do not appear after reopening the site | Reopen the same browser profile and check that browser site data has not been cleared and IndexedDB is available. |
 | A question gives a weak answer | Check that the relevant note is enabled, improve the source text if possible, and ask a more specific question. |
 
-## License
-
-No license file is currently included in this repository. Add a `LICENSE` file if you intend to grant others explicit permission to use, modify, or redistribute the project.
-
 ## Related Repository
 
 The companion AI project is available at [NoteMind-AI](https://github.com/balushetty07/NoteMind-AI). This repository contains the web interface and the Flask routes used by the currently deployed NoteMind Web application.
